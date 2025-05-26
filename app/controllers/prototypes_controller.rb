@@ -1,5 +1,7 @@
 class PrototypesController < ApplicationController
   before_action :authenticate_user!, only: [:new, :create, :edit, :update, :destroy]
+  before_action :set_prototype, only: [:edit, :update]
+  before_action :authorize_user!, only: [:edit, :update]
 
   def index
     @prototypes = Prototype.includes(:user).all
@@ -30,9 +32,6 @@ class PrototypesController < ApplicationController
 
 def update
   @prototype = Prototype.find(params[:id])
-        unless user_signed_in?
-    redirect_to action: :index
-  end
   if @prototype.update(prototype_params)
     redirect_to prototype_path(@prototype)
   else
@@ -55,5 +54,19 @@ end
 
   def prototype_params
     params.require(:prototype).permit(:title, :catch_copy, :concept, :image).merge(user_id: current_user.id)
+end
+
+  private
+
+  def set_prototype
+    @prototype = Prototype.find(params[:id])
+  end
+
+  def authorize_user!
+    # 現在のユーザーがこのプロトタイプの投稿者でなければトップページへリダイレクト
+    unless current_user == @prototype.user
+      redirect_to root_path
+    end
+  end
 end
 end
